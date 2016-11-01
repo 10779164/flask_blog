@@ -1,0 +1,6 @@
+<p>Dear {{ user.username }},</p>
+<p>Welcome to Cyaoda - Blog!!</p>
+<p>To confirm your account please <a href="{{ url_for('auth.confirm', token=token, _external=True)}}">click here</a> </p>
+<p>Sincerely,</p>
+<p>The Cyaoda -Blog Team</p>
+<p>Note: replies to this email address are not monitored.</p>
