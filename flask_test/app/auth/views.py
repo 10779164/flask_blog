@@ -33,9 +33,9 @@ def logout():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(email=form.email.data,
-                    username=form.username.data,
-                    password=form.password.data)
+        user = User(email=form.email.data.strip(),
+                    username=form.username.data.strip(),
+                    password=form.password.data.strip())
         db.session.add(user)
         db.session.commit()
         token = user.generate_confirmation_token()
@@ -95,8 +95,8 @@ def alter_psw():
     form = AlterPswForm()
     if form.validate_on_submit():
         user = User.query.get(session['uid'])
-        if user and user.verify_password(form.old_password.data):
-            user.password = form.password.data
+        if user and user.verify_password(form.old_password.data.strip()):
+            user.password = form.password.data.strip()
             db.session.commit()
             flash(u'密码修改成功')
             logout_user()
