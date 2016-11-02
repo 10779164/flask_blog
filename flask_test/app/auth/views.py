@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, flash, request, session, c
 from flask_login import login_user, login_required, logout_user, current_user
 from . import auth
 from ..models import User
-from .forms import LoginForm, RegistrationForm
+from .forms import LoginForm, RegistrationForm, AlterPswForm
 from .. import db
 from ..email import send_email
 
@@ -17,6 +17,7 @@ def login():
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
             session['username'] = user.username
+            session['uid'] = user.id
             return redirect(request.args.get('next') or url_for('main.index'))
         flash(u'用户名错误或密码错误！请重新输入')
     return render_template('auth/login.html', form = form)
@@ -78,3 +79,30 @@ def resend_confirmation():
                    'auth/email/confirm', user = current_user, token = token)
     flash('A new confirmation email has been sent to you by email')
     return redirect(url_for('main.index'))
+
+@auth.route('/user_info', methods=['POST', 'GET'])
+@login_required
+def get_user_info():
+    '''用户信息'''
+    if current_user.confirmed == 0:
+        redirect(url_for('auth.before_request'))
+
+    return render_template('auth/user_info.html')
+
+@auth.route('/alter_psw', methods=['POST', 'GET'])
+@login_required
+def alter_psw():
+    form = AlterPswForm()
+    if form.validate_on_submit():
+        user = User.query.get(session['uid'])
+        if user and user.verify_password(form.old_password.data):
+            user.password = form.password.data
+            db.session.commit()
+            flash(u'密码修改成功')
+            logout_user()
+            return redirect(url_for('auth.login'))
+        else:
+            flash(u'密码错误')
+            return redirect(url_for('auth.alter_psw'))
+
+    return render_template('auth/alter_psw.html', form = form)

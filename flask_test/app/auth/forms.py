@@ -5,6 +5,7 @@ from flask_wtf import Form
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, Email, Length, Regexp, EqualTo
 from ..models import User
+from flask_login import current_user
 
 class LoginForm(Form):
     '''登陆表单'''
@@ -31,3 +32,10 @@ class RegistrationForm(Form):
         '''检验用户名是否被注册'''
         if User.query.filter(User.username == field.data).first():
             raise ValidationError(u'该用户名已被注册')
+
+class AlterPswForm(Form):
+    '''用户信息表'''
+    old_password = PasswordField(u'旧密码', validators=[DataRequired()])
+    password = PasswordField(u'新密码', validators=[DataRequired(), EqualTo('password2', message=u'确认密码有误')])
+    password2 = PasswordField(u'确认密码', validators=[DataRequired()])
+    submit = SubmitField(u'提交')
