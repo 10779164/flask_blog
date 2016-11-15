@@ -2,13 +2,35 @@
 
 {% block page_content %}
 <div class="page-header">
-    <h1>The Information Of {{ current_user.username }}</h1>
+    <img class="img-rounded profile-thumbnail" src="{{ user.gravatar(size=256) }}"  >
+    <div class="profile-header">
+        <h1>{{ user.username }} 个人信息</h1>
+        {% if user.name or user.location %}
+        <p>
+            {% if user.name %} {{ user.name}} {% endif %}
+            {% if user.location %}
+                来自 <a href="http://map.baidu.com/?q={{ user.location }}" target="_blank">{{ user.location}}</a>
+            {% endif %}
+        </p>
+        {% endif %}
+        {% if user.is_adminitrator() %}
+        <p><a href="mailto:{{ user.email }}" target="_blank">{{ user.email }}</a></p>
+        {% endif %}
+        {% if user.about_me %} <p>{{ user.about_me }}</p> {% endif %}
+        <p>{{ user.posts.count() }} blog posts</p>
+        <p>{% if user == current_user and not current_user.is_adminitrator()%}
+            <a class="btn btn-danger" href="{{ url_for('main.edit_profile') }}">编辑信息</a>
+            {% endif %}
+            {% if current_user.is_adminitrator() %}
+            <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user.id) }}">编辑信息[Admin]</a>
+            {% endif %}
+        </p>
+
+    </div>
 </div>
-<div>
-    <h4>用户名： {{ current_user.username }}</h4>
-    <h4>邮箱： {{current_user.email }}</h4>
-</div>
-<div>
-    <p><a href="{{ url_for('auth.alter_psw') }}">修改密码</a></p>
-</div>
+
+<h1>Posts by {{ user.username}}</h1>
+{% include '_posts.html' %}
+
+
 {% endblock page_content %}

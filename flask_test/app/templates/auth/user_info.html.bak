@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<div class="page-header">
+    <img class="img-rounded profile-thumbnail" src="http://i7.qhimg.com/t014433ed6f6503e220.jpg">
+    <div class="profile-header">
+    <h1>{{ current_user.username }} 个人信息</h1>
+    {% if user.name or user.location %}
+    <p>
+        {% if user.name %} {{ user.name}} {% endif %}
+        {% if user.location %}
+            来自 <a href="http://map.baidu.com/?q={{ user.location }}" target="_blank">{{ user.location}}</a>
+        {% endif %}
+    </p>
+    {% endif %}
+    {% if current_user.is_adminitrator() %}
+    <p><a href="mailto:{{ user.email }}" target="_blank">{{ user.email }}</a></p>
+    {% endif %}
+    {% if user.about_me %} <p>{{ user.about_me }}</p> {% endif %}
+    </div>
+</div>
+<div class="footer">
+    <div class="container">
+        <p class="text-muted">
+            注册日期 {{ moment(user.member_since).format('L')}}.
+            上次访问日期 {{ moment(user.last_seen).format('L') }}
+        </p>
+    </div>
+</div>
+{% endblock page_content %}

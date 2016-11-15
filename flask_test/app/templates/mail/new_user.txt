@@ -1,1 +1,1 @@
-User {{user.username}} has joided !!
+用户 {{user.username}} 认证成功 !!

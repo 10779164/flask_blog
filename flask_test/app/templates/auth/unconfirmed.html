@@ -2,12 +2,12 @@
 {% block page_content %}
 <div class="page-header">
     <h1>
-        Hello, {{ current_user.username }}
+        你好, {{ current_user.username }}
     </h1>
 </div>
 <div>
     <h3>
-        You have not confirmed your account yet.
+        您还没通过邮箱认证，请登录您邮箱进行认证，谢谢！！
     </h3>
 </div>
 <div>
@@ -17,6 +17,6 @@
     </p>
 </div>
 <div>
-    <p>Need another confirmation email? <a href="{{ url_for('auth.resend_confirmation') }}">Click here</a></p>
+    <p>还没收到认证邮件? 点击<a href="{{ url_for('auth.resend_confirmation') }}">重新发送</a></p>
 </div>
 {% endblock page_content %}

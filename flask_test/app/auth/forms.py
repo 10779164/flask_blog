@@ -9,10 +9,10 @@ from flask_login import current_user
 
 class LoginForm(Form):
     '''登陆表单'''
-    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
-    password = PasswordField('password', validators=[DataRequired(), Length(6, 120)])
-    remember_me = BooleanField('Keep me logged in')
-    submit = SubmitField('Log In')
+    email = StringField(u'邮箱', validators=[DataRequired(), Length(1, 64), Email()])
+    password = PasswordField(u'密码', validators=[DataRequired(), Length(6, 120)])
+    remember_me = BooleanField(u'记住我')
+    submit = SubmitField(u'登陆')
 
 class RegistrationForm(Form):
     email = StringField(u'邮箱', validators=[DataRequired(), Length(1, 64), Email()])

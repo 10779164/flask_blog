@@ -3,15 +3,42 @@
 
 from . import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from flask import current_app
+from flask import current_app, request
+from datetime import datetime
+import time
+import hashlib
 
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
+    default = db.Column(db.Boolean, default=False, index=True)
+    permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy = 'dynamic')
+
+    @staticmethod
+    def insert_roles():
+        roles = {
+            'User': (Permission.FOLLOW |
+                     Permission.COMMENT|
+                     Permission.WRITE_ARTICLES, 1),
+            'Moderator' : (Permission.FOLLOW |
+                     Permission.COMMENT|
+                     Permission.WRITE_ARTICLES |
+                           Permission.MODERATE_COMMENTS, 0),
+            'Adminitrators' : (0xff, 0)
+        }
+        for r in roles:
+            role = Role.query.filter(Role.name == r).first()
+            if role is None:
+                role = Role(name = r)
+            role.permissions = roles[r][0]
+            role.default = roles[r][1]
+            db.session.add(role)
+        db.session.commit()
+
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -24,6 +51,26 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128))
     email = db.Column(db.String(64), unique=True, index=True)
     confirmed = db.Column(db.Integer, default = 0)
+
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text())
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    avatar_hash = db.Column(db.String(32))
+
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
+
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if self.role is None:
+            if self.email == current_app.config['FLASK_ADMIN']:
+                self.role = Role.query.filter(Role.permissions == 0xff).first()
+            if self.role is None:
+                self.role = Role.query.filter(Role.default == True).first()
+        if self.email is not None and self.avatar_hash is None:
+            self.avatar_hash = hashlib.md5('747106549@qq.com'.encode('utf-8')).hexdigest()
 
     @property
     def password(self):
@@ -56,6 +103,29 @@ class User(db.Model, UserMixin):
         db.session.add(self)
         return True
 
+    def can(self, permissions):
+        '''进行位与操作，检验请求与赋予的角色'''
+        return self.role is not None and (self.role.permissions & permissions) == permissions
+
+    def is_adminitrator(self):
+        '''判断是否为管理员角色'''
+        return self.can(Permission.ADMINISTER)
+
+    def ping(self):
+        '''刷新用户最后访问时间'''
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        '''通过gravatar网站加载邮箱头像'''
+        if request.is_secure:
+            url = 'https://secure/gravatar.com/avatar'
+        else:
+            url = 'http://www.gravatar.com/avatar'
+        hash = self.avatar_hash or hashlib.md5('747106549@qq.com'.encode('utf-8')).hexdigest()
+        return '{url}/{hash}?s={size}%d={default}%r={rating}'.format(
+            url = url, hash = hash, size = size, default = default, rating = rating)
+
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -63,3 +133,34 @@ class User(db.Model, UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+class Permission:
+    FOLLOW = 0x01
+    COMMENT = 0x02
+    WRITE_ARTICLES = 0x04
+    MODERATE_COMMENTS = 0x08
+    ADMINISTER = 0x80
+
+class AnonymousUser(AnonymousUserMixin):
+    '''此类为用户未登陆时的角色，保持一致性不用检验用户是否已登陆，
+     能自由调用current_user.can 和 current_user.is_administrator方法'''
+    def can(self, permissions):
+        return False
+
+    def is_adminitrator(self):
+        return False
+
+#将Flask_Login中的AnonymousUserMixin类变成该AnonymousUser类
+login_manager.anonymous_user = AnonymousUser
+
+class Post(db.Model):
+    '''博客文章'''
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    timestamp =  db.Column(db.DateTime, default= datetime.utcnow, index=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+
+
+

@@ -26,7 +26,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash(u'%s用户已经退出账号！'% session['username'])
+    flash(u'用户已成功退出账号！')
     return  redirect(url_for('auth.login'))
 
 @auth.route('/register', methods=['POST', 'GET'])
@@ -41,7 +41,7 @@ def register():
         token = user.generate_confirmation_token()
         send_email(current_app.config['FLASK_MAIL_SENDER'], 'Confirm Your Account',
                    'auth/email/confirm', user = user, token = token)
-        flash('A confirmation email has been sent to you by email.')
+        flash(u'验证信息已发到你邮箱，请查收确认！')
         return redirect(url_for('main.index'))
     return render_template('auth/register.html', form = form)
 
@@ -52,17 +52,19 @@ def confirm(token):
     if current_user.confirmed == 1:
         return redirect(url_for('main.index'))
     if current_user.confirm(token):
-        flash('You have confirmed your account, Thanks')
+        flash(u'你已验证成功，请登录谢谢！')
     else:
-        flash('The confirmation link is invalid or has expired!!')
+        flash(u'验证信息已发到你邮箱，请查收确认！')
     return redirect(url_for('main.index'))
 
 @auth.before_app_request
 def before_request():
     '''处理程序中过滤未确认的用户'''
-    if current_user.is_authenticated and current_user.confirmed == 0 \
-        and request.endpoint[:5] != 'auth.' and request.endpoint != 'static':
-        return redirect(url_for('auth.unconfirmed'))
+    if current_user.is_authenticated:
+        current_user.ping()
+        if current_user.confirmed == 0 \
+            and request.endpoint[:5] != 'auth.' and request.endpoint != 'static':
+            return redirect(url_for('auth.unconfirmed'))
 
 @auth.route('/unconfirmed')
 def unconfirmed():
@@ -77,11 +79,10 @@ def resend_confirmation():
     token = current_user.generate_confirmation_token()
     send_email(current_app.config['FLASK_MAIL_SENDER'], 'Confirm Your Account',
                    'auth/email/confirm', user = current_user, token = token)
-    flash('A new confirmation email has been sent to you by email')
+    flash(u'新的验证信息已再次发到你邮箱，请查收确认！')
     return redirect(url_for('main.index'))
 
 @auth.route('/user_info', methods=['POST', 'GET'])
-@login_required
 def get_user_info():
     '''用户信息'''
     if current_user.confirmed == 0:

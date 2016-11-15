@@ -5,13 +5,13 @@
 
 {% block page_content %}
 <div class="page-header">
-    <h1>Login</h1>
+    <h1>登陆</h1>
 </div>
 <div class="col-md-4">
     {{ wtf.quick_form(form) }}
     <div style="margin-top: 20px;">
         <p>
-            New User?<a href="{{ url_for('auth.register') }}">Click here to register</a>
+            新用户?<a href="{{ url_for('auth.register') }}">马上注册</a>
         </p>
     </div>
 </div>
