@@ -4,8 +4,9 @@
 from flask_wtf import Form
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, Email, Length, Regexp, EqualTo
+
 from ..models import User
-from flask_login import current_user
+
 
 class LoginForm(Form):
     '''登陆表单'''

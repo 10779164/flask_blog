@@ -1,8 +1,8 @@
 #! usr/bin/env python
 #coding=utf-8
 
-from . import main
 from flask import render_template
+from .views import main
 
 # 要想注册程序全局的错误处理，必须要用app_errorhandler
 @main.app_errorhandler(404)

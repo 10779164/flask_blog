@@ -4,7 +4,9 @@
 from flask_wtf import Form
 from wtforms import StringField, SubmitField, TextAreaField, BooleanField, SelectField, ValidationError
 from wtforms.validators import DataRequired, Length, Email, Regexp
-from ..models import Role, db, User
+
+from ..models import Role, User
+
 
 class EditProfileForm(Form):
     '''普通用户级别的资料编辑表单'''
